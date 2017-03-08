@@ -10,7 +10,7 @@ $datadir = getcwd() . "/data/";
 $jsondir = getcwd() . "/cache/";
 $outputsdir = getcwd() . "/outputs/";
 
-$apikey = "AIzaSyDHU2an8sG-k2S5tzhlw7dvqYw0mEk5HLM";					// your api key
+$apikey = "";					// your api key
 
 ignore_user_abort(false);
 set_time_limit(3600*5);

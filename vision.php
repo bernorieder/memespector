@@ -55,7 +55,6 @@ function getImageBinary($image_url) {
 		$image_base64 = base64_encode(file_get_contents($image_url));
 		
 		$cvurl = 'https://vision.googleapis.com/v1/images:annotate?key=' . $apikey;
-		$type = 'FACE_DETECTION';
 		
 		$request_json = '{
 			"requests": [

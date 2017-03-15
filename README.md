@@ -1,6 +1,6 @@
 # memespector
 
-A simple script for using Google's Vision API. Takes a comma- or tab-separated files containing a column with image URLs as input, sends images to the Vision API and puts the detected annotations back into the list.
+A simple script for using Google's Vision API. Takes a comma- or tab-separated file containing a column with image URLs as input, sends images to the Vision API and puts the detected annotations back into the list.
 
 ## Installation
 

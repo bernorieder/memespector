@@ -12,7 +12,7 @@ Follow the following steps for installation on a php equipped machine:
 4. Rename the config\_sample.php file to config.php and make the following edits:
 	* insert the file name containing your image URLs (local or online) into the value of the $inputfile;
 	* specify the name of the column containing the URLs in the $urlcolumn variable; 
-	* specify the column delimiter in the $csvdelimiter variable (“\t” for tab-separated files or “,” vor comma-separated files);
+	* specify the column delimiter in the $csvdelimiter variable (“\t” for tab-separated files or “,” for comma-separated files);
 	* put your API key into the $apikey variable;
 
 ## Execution

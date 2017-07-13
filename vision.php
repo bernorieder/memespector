@@ -48,10 +48,6 @@ for($i = 0; $i < count($images); $i++) {
 	$images[$i]["gv_ss_medical"] = $info->responses[0]->safeSearchAnnotation->medical;
 	$images[$i]["gv_ss_violence"] = $info->responses[0]->safeSearchAnnotation->violence;
 
-    // DEBUG BEGIN
-    //print_r($info->responses[0]->webDetection->$branch);
-    // DEBUG END
-	
 	$labels = array();
 	foreach($info->responses[0]->labelAnnotations as $annotation) {
 		$labels[] = $annotation->description . "(" . $annotation->score . ")";

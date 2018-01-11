@@ -1,11 +1,11 @@
-jsonRequestFeaturesjsonRequestimageHashsaveImageCopy<?php
+<?php
 
 include_once("config.php");
 
-$datafile = $datadir . $inputFile;
+$datafile = $dataDir . $inputFile;
 $images = getCSV($datafile,$csvDelimiter);
 
-$fp = fopen($outputsdir . "processed_" . $inputFile, "w");
+$fp = fopen($outputsDir . "processed_" . $inputFile, "w");
 
 if (array_key_exists("created_time_unix", $images[0])) {
     /* This is facebook specific */
@@ -17,7 +17,6 @@ $fields = array_merge($fields, array("imageID", "file_ext","gv_ss_adult","gv_ss_
 
 $newheader = array_merge(array_keys($images[0]), $fields);
 
-//$fp = fopen($outputsdir . "processed_" . $inputFile, "w");
 fwrite($fp, "\xEF\xBB\xBF" . implode($csvDelimiter, $newheader) . "\n");
 
 //Print information for user display. Set a few operational variables.
@@ -33,11 +32,11 @@ echo "Project name:\t" . $projectName . "\n";
 echo "Input file:\t" . $inputFile . "\n";
 
 $numImages = count($images);
-echo "Dataset contains " . count($images) . " images. \n";
+echo "Number of rows: \t" . count($images) . "\n";
 
 if($limit > 0) {
 	$numImages = $limit;
-	echo "Working on subset of " . $numImages . " images\n• • • • •\n\n";
+	echo "Limit subset: " . $numImages . "\n• • • • •\n\n";
 }
 
 // For each image in the dataset
@@ -47,13 +46,16 @@ for($i = 0; $i < $numImages; $i++) {
     echo "Image " . ($i + 1) . " of " . $numImages . "\n";
     echo "Path: " . $images[$i][$imagesColumn] . "\n";
 
+    // Check if URL field contains something
     if (strlen($images[$i][$imagesColumn]) == 0) {
         echo ($i + 1) . "\n**ERROR**\nThis row does not seem to have an image URL. Did you configure the column name and delimiter right (see config.php)? Hint: don't use Excel.\n";
         continue;
     }
 
+    // Generate hash from URL
     $imageID = sha1($images[$i][$imagesColumn]);
 
+    // Specific tweaks for Facebook data. Extraction of file extension.
     if (array_key_exists("created_time_unix", $images[$i])) {
       /* This is facebook specific */
     	$images[$i]["created_time"] = date("Y-m-d H:i:s", $images[$i]["created_time_unix"]);
@@ -66,11 +68,13 @@ for($i = 0; $i < $numImages; $i++) {
       $ext = pathinfo($images[$i][$imagesColumn], PATHINFO_EXTENSION);
     }
 
+    // Add hash and extension to CSV
     $images[$i]["imageID"] = $imageID;
     $images[$i]["file_ext"] = $ext;
 
+    // Make copy of image if set to do so
     if($saveImageCopy){
-      $localFile = $imgdir . $imageID . "." . $ext;
+      $localFile = $imgDir . $imageID . "." . $ext;
       echo "Copy path: " . $localFile . "\n";
       if(!file_exists($localFile)){
         echo "\tCopying image...";
@@ -82,6 +86,7 @@ for($i = 0; $i < $numImages; $i++) {
       }
     }
 
+    // Process image (request to API)
     if ($forceBase64) {
       $info = processImage($localFile, $imageID);
     }
@@ -89,8 +94,10 @@ for($i = 0; $i < $numImages; $i++) {
       $info = processImage($images[$i][$imagesColumn], $imageID);
     }
 
+    // Catch error (specifically: image not retrievable by the API)
     $error= catchError($info);
 
+    // Parse API json response and add it to the processed CSV
     foreach ($moduleActivation as $module => $status) {
   		if(!$status){
   			switch ($module) {
@@ -186,11 +193,12 @@ for($i = 0; $i < $numImages; $i++) {
 }
 
 function processImage($imageUrl, $imageHash) {
-  global $jsondir,$jsoncopydir;
+  global $jsonDir,$jsoncopyDir;
 
-  $jsonfn = $jsondir . $imageHash . ".json";
-  $jsoncopy = $jsoncopydir . $imageHash . ".json";
+  $jsonfn = $jsonDir . $imageHash . ".json";
+  $jsoncopy = $jsoncopyDir . $imageHash . ".json";
 
+  // Check if file has been processed and use cahed content if available
   if(file_exists($jsonfn)) {
     echo "\t**Using cached content (remove all files in the cache folder if you see this message and the tool is not working yet)**\n";
     $jsonResponse = file_get_contents($jsonfn);
@@ -205,8 +213,9 @@ function processImage($imageUrl, $imageHash) {
 }
 
 function getAnnotation($imageUrl, $imageID) {
-  global $apikey, $imagesRemote, $forceBase64, $saveImageCopy, $imgdir;
+  global $apiKey, $imagesRemote, $forceBase64, $saveImageCopy, $imgDir;
 
+  // Create json request according to settings
   if($imagesRemote && !$forceBase64) {
     $jsonRequest = jsonRequestRemote($imageUrl);
   }
@@ -216,7 +225,9 @@ function getAnnotation($imageUrl, $imageID) {
     $jsonRequest = jsonRequestBase64($image_base64);
     echo "done.\n";
   }
-  $cvurl = 'https://vision.googleapis.com/v1/images:annotate?key=' . $apikey;
+
+  // Submit request to API
+  $cvurl = 'https://vision.googleapis.com/v1/images:annotate?key=' . $apiKey;
   $curl = curl_init();
   curl_setopt($curl, CURLOPT_URL, $cvurl);
   curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -282,72 +293,6 @@ function jsonRequestFeatures() {
   }
   return $jsonRequestFeatures;
 }
-
-/*function getImageBinary($image_url) {
-
-	global $apikey,$jsondir;
-
-	$jsonfn = $jsondir . sha1($image_url) . ".json";
-
-	if (!file_exists($jsonfn)) {
-
-        echo "downloading";
-
-		// read image from URL and encode base64 to directly send in the request
-		$image_base64 = base64_encode(file_get_contents($image_url));
-
-        echo " .. analysing .. ";
-
-		$cvurl = 'https://vision.googleapis.com/v1/images:annotate?key=' . $apikey;
-
-		$request_json = '{
-			"requests": [
-				{
-					"image": {
-						"content": "'.$image_base64.'"
-					},
-					"features": [
-						{
-							"type": "LABEL_DETECTION"
-						},
-						{
-							"type": "TEXT_DETECTION"
-						},
-						{
-							"type": "SAFE_SEARCH_DETECTION"
-						},
-						{
-							"type": "WEB_DETECTION"
-						}
-					]
-				}
-			]
-		}';
-
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, $cvurl);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($curl, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
-		curl_setopt($curl, CURLOPT_POST, true);
-		curl_setopt($curl, CURLOPT_POSTFIELDS, $request_json);
-		$json_response = curl_exec($curl);
-		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
-
-		file_put_contents($jsonfn, $json_response);
-
-        echo "done\n";
-
-	} else {
-
-        echo "using cached content (remove all files in the cache folder if you see this message and the tool is not working yet)\n";
-
-		$json_response = file_get_contents($jsonfn);
-	}
-
-	return json_decode($json_response);
-}
-*/
 
 function getCSV($filename,$delimiter = ",") {
 

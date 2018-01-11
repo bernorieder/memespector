@@ -26,11 +26,11 @@ $csvDelimiter = "\t";
 // Set TRUE if images are found online. Otherwise, script will try to find the images on local path.
 $imagesRemote = TRUE;
 
-// Set TRUE to process REMOTE images from local copies. Slower and with more network trafic, but it is useful when Google Vision API is unable to retrieve images by itself.
-// ** Needed for Facebook images **
+// Set TRUE to process REMOTE images from local copies. May be slower and with more network trafic, but it is useful when Google Vision API is unable to retrieve images by itself.
+// ** Needed for Facebook images. Leave true if unsure **
 $forceBase64 = TRUE;
 
-// Set TRUE if you want to copies of the processed images
+// Set TRUE if you want to make copies of the processed images
 $saveImageCopy = TRUE;
 
 // ---------------------------------------
@@ -45,41 +45,39 @@ $moduleActivation = array(
 	"WEB_DETECTION"					=> FALSE,
 	"FACE_DETECTION"				=> FALSE
 //TO BE FUTURELY IMPLEMENTED
-/*
-	"CROP_HINTS"
-	"IMAGE_PROPERTIES"
-	"LANDMARK_DETECTION"
-	"LOGO_DETECTION"
-*/
+	// "CROP_HINTS"
+	// "IMAGE_PROPERTIES"
+	// "LANDMARK_DETECTION"
+	// "LOGO_DETECTION"
 	);
 
 //Limit maximum number of results per aspect
 $maxResults = 10;
 
 // !! CAREFUL !! Your Google Vision API key
-$apikey = "YOUR_API_KEY_HERE";
+$apiKey = "YOUR_API_KEY_HERE";
 
 // ---------------------------------------
 
 // ** INTERNAL SETTINGS (Probably no need to change) **
 
 // Folders the script needs, create in the same directory and make sure they can be written to
-$datadir		= getcwd() . "/data/";
-$jsondir		= getcwd() . "/cache/";
-$outputsdir = getcwd() . "/outputs/" . $projectName . "/";
-$imgdir 		= $outputsdir . "IMG/";
-$jsoncopydir= $outputsdir . "cache_copy" . "/";
+$dataDir		= getcwd() . "/data/";
+$jsonDir		= getcwd() . "/cache/";
+$outputsDir = getcwd() . "/outputs/" . $projectName . "/";
+$imgDir 		= $outputsDir . "IMG/";
+$jsoncopyDir= $outputsDir . "cache_copy" . "/";
 
-if(!file_exists($outputsdir)) {
-	mkdir($outputsdir);
+if(!file_exists($outputsDir)) {
+	mkdir($outputsDir);
 }
 
-if($saveImageCopy && !file_exists($imgdir)) {
-	mkdir($imgdir);
+if($saveImageCopy && !file_exists($imgDir)) {
+	mkdir($imgDir);
 }
 
-if(!file_exists($jsoncopydir)) {
-	mkdir($jsoncopydir);
+if(!file_exists($jsoncopyDir)) {
+	mkdir($jsoncopyDir);
 }
 
 

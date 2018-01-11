@@ -9,11 +9,11 @@ $fp = fopen($outputsDir . "processed_" . $inputFile, "w");
 
 if (array_key_exists("created_time_unix", $images[0])) {
     /* This is facebook specific */
-    $fields = array("filename");
+    $fields = array("original_filename");
 } else {
     $fields = array();
 }
-$fields = array_merge($fields, array("imageID", "file_ext","gv_ss_adult","gv_ss_spoof","gv_ss_medical","gv_ss_violence","gv_labels", "gv_text", "gv_web_entities", "gv_web_full_matching_images", "gv_web_partial_matching_images", "gv_web_pages_with_matching_images", "gv_web_visually_similar_images", "gv_face_joy", "gv_face_sorrow", "gv_face_anger", "gv_face_surprise"));
+$fields = array_merge($fields, array("image_id", "file_ext", "copy_filename","gv_ss_adult","gv_ss_spoof","gv_ss_medical","gv_ss_violence","gv_labels", "gv_text", "gv_web_entities", "gv_web_full_matching_images", "gv_web_partial_matching_images", "gv_web_pages_with_matching_images", "gv_web_visually_similar_images", "gv_face_joy", "gv_face_sorrow", "gv_face_anger", "gv_face_surprise"));
 
 $newheader = array_merge(array_keys($images[0]), $fields);
 
@@ -32,19 +32,16 @@ echo "Project name:\t" . $projectName . "\n";
 echo "Input file:\t" . $inputFile . "\n";
 
 $numImages = count($images);
-echo "Number of rows: \t" . count($images) . "\n";
+echo "Images: \t" . count($images) . "\n";
 
-if($limit > 0) {
+if($limit > 0 && $limit <= $numImages) {
 	$numImages = $limit;
-	echo "Limit subset: " . $numImages . "\n• • • • •\n\n";
+	echo "Subset: " . $numImages . "\n• • • • •\n\n";
 }
 
 // For each image in the dataset
 
 for($i = 0; $i < $numImages; $i++) {
-
-    echo "Image " . ($i + 1) . " of " . $numImages . "\n";
-    echo "Path: " . $images[$i][$imagesColumn] . "\n";
 
     // Check if URL field contains something
     if (strlen($images[$i][$imagesColumn]) == 0) {
@@ -55,22 +52,34 @@ for($i = 0; $i < $numImages; $i++) {
     // Generate hash from URL
     $imageID = sha1($images[$i][$imagesColumn]);
 
+    if(!$imagesRemote && !$absolutePath) {
+      $imagePath = $inputImgDir . $images[$i][$imagesColumn];
+    }
+    else {
+      $imagePath = $images[$i][$imagesColumn];
+    }
+
+    echo "Image " . ($i + 1) . " of " . $numImages . "\n";
+    echo "Path: " . $imagePath . "\n";
+    echo "Hash: " . $imageID . "\n";
+
     // Specific tweaks for Facebook data. Extraction of file extension.
     if (array_key_exists("created_time_unix", $images[$i])) {
       /* This is facebook specific */
     	$images[$i]["created_time"] = date("Y-m-d H:i:s", $images[$i]["created_time_unix"]);
 
-    	preg_match_all("/.+\/(.+?)\?/",$images[$i][$imagesColumn],$out);
-    	$images[$i]["filename"] = $out[1][0];
-      $ext = pathinfo($images[$i]["filename"], PATHINFO_EXTENSION);
+    	preg_match_all("/.+\/(.+?)\?/",$imagePath,$out);
+    	$images[$i]["original_filename"] = $out[1][0];
+      $ext = pathinfo($images[$i]["original_filename"], PATHINFO_EXTENSION);
     }
     else {
-      $ext = pathinfo($images[$i][$imagesColumn], PATHINFO_EXTENSION);
+      $ext = pathinfo($imagePath, PATHINFO_EXTENSION);
     }
 
     // Add hash and extension to CSV
-    $images[$i]["imageID"] = $imageID;
+    $images[$i]["image_id"] = $imageID;
     $images[$i]["file_ext"] = $ext;
+    $images[$i]["copy_filename"] = $imageID . "." . $ext;
 
     // Make copy of image if set to do so
     if($saveImageCopy){
@@ -78,7 +87,7 @@ for($i = 0; $i < $numImages; $i++) {
       echo "Copy path: " . $localFile . "\n";
       if(!file_exists($localFile)){
         echo "\tCopying image...";
-        copy($images[$i][$imagesColumn], $localFile);
+        copy($imagePath, $localFile);
         echo "done.\n";
       }
       else {
@@ -87,11 +96,11 @@ for($i = 0; $i < $numImages; $i++) {
     }
 
     // Process image (request to API)
-    if ($forceBase64) {
+    if ($forceBase64 && $saveImageCopy) {
       $info = processImage($localFile, $imageID);
     }
     else {
-      $info = processImage($images[$i][$imagesColumn], $imageID);
+      $info = processImage($imagePath, $imageID);
     }
 
     // Catch error (specifically: image not retrievable by the API)
@@ -220,6 +229,9 @@ function getAnnotation($imageUrl, $imageID) {
     $jsonRequest = jsonRequestRemote($imageUrl);
   }
   else {
+    if(!$absolutePath && !$imagesRemote) {
+      $imageUrl = $inputImgDir . $imageUrl;
+    }
     echo "\tEncoding base64...";
     $image_base64 = base64_encode(file_get_contents($imageUrl));
     $jsonRequest = jsonRequestBase64($image_base64);

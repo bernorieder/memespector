@@ -19,19 +19,23 @@ $imagesColumn = "imageurl";
 // The column delimiter ("\t" for tab, "," for comma, etc.).
 $csvDelimiter = "\t";
 
+// * ONLY FOR PROCESSING LOCAL IMAGES *
+// Set to TRUE if input file contains absolute paths to image files. Otherwise, script will look for subfolder 'IMG' on 'data' folder.
+$absolutePath = FALSE;
+
 // ----------------------------------------
 
 // ** IMAGE DOWNLOAD CONFIGURATION **
 
-// Set TRUE if images are found online. Otherwise, script will try to find the images on local path.
+// Set TRUE if images are found online. Otherwise, script will retrieve images from local path.
 $imagesRemote = TRUE;
 
-// Set TRUE to process REMOTE images from local copies. May be slower and with more network trafic, but it is useful when Google Vision API is unable to retrieve images by itself.
-// ** Needed for Facebook images. Leave true if unsure **
+// ** Needed for Facebook images. LEAVE TRUE IF UNSURE **
+// Set TRUE to process REMOTE images from local copies. Slower and with more network trafic, but useful when Google Vision API is unable to retrieve images by itself.
 $forceBase64 = TRUE;
 
 // Set TRUE if you want to make copies of the processed images
-$saveImageCopy = TRUE;
+$saveImageCopy = FALSE;
 
 // ---------------------------------------
 
@@ -67,6 +71,7 @@ $jsonDir		= getcwd() . "/cache/";
 $outputsDir = getcwd() . "/outputs/" . $projectName . "/";
 $imgDir 		= $outputsDir . "IMG/";
 $jsoncopyDir= $outputsDir . "cache_copy" . "/";
+$inputImgDir= $dataDir . "IMG/";
 
 if(!file_exists($outputsDir)) {
 	mkdir($outputsDir);
